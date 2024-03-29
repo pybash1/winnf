@@ -1,0 +1,20 @@
+[package]
+name = "winnf"
+version = "1.0.0"
+edition = "2021"
+authors = ["PyBash <hi@pybash.xyz>"]
+description = "A nerdfetch alternative for windows written in Rust."
+documentation = "https://github.com/pybash1/winnf"
+readme = "README.md"
+homepage = "https://github.com/pybash1/winnf"
+repository = "https://github.com/pybash1/winnf"
+license-file = "LICENSE"
+keywords = ["windows", "fetch", "terminal", "cli"]
+categories = ["command-line-utilities"]
+
+
+[dependencies]
+colored = "2.1.0"
+sysinfo = "0.30.7"
+uptime_lib = "0.3.0"
+whoami = "1.5.1"
