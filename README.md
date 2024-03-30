@@ -10,10 +10,17 @@ A Windows fetch script using Nerdfonts
 
 ### To install and run
 
-#### [Windows](https://crates.io/crates/winnf):
+#### [Cargo](https://crates.io/crates/winnf):
 
 ```sh
 cargo install winnf --locked
+winnf
+```
+
+#### Scoop:
+
+```sh
+scoop install https://raw.githubusercontent.com/pybash1/winnf/main/winnf.json
 winnf
 ```
 
