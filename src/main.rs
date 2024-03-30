@@ -1,10 +1,13 @@
 use colored::Colorize;
+use shellexpand::full;
 use std::{
     env::consts::OS,
-    process::{Command, Stdio},
+    fs::read_dir,
+    path::{Path, PathBuf},
 };
 use sysinfo::System;
 use uptime_lib::get;
+use which::which;
 use whoami::{devicename, distro, platform, username};
 
 pub fn windows_ascii(
@@ -67,7 +70,7 @@ fn main() {
     sys.refresh_memory();
 
     let uptime = get();
-    let mut uptime_val = String::new();
+    let mut uptime_val = String::from("Unavailable");
 
     match uptime {
         Ok(_) => {
@@ -86,7 +89,7 @@ fn main() {
                 uptime_val = format!("{} seconds", secs);
             }
         }
-        Err(_) => uptime_val = String::from("Unavailable"),
+        Err(_) => {}
     }
 
     match OS {
@@ -106,26 +109,35 @@ fn main() {
             let mut packages = String::new();
 
             let mut scoop_count = 0;
-            let scoop_cmd = Command::new("cmd")
-                .arg("/C")
-                .arg("scoop list")
-                .stdout(Stdio::piped())
-                .output();
+            let scoop_exists = which("scoop");
 
-            match scoop_cmd {
-                Ok(_) => {
-                    let unwrapped = scoop_cmd.unwrap();
-                    let stderr = String::from_utf8_lossy(&unwrapped.stderr);
-                    let stdout = String::from_utf8_lossy(&unwrapped.stdout);
-                    if stderr.contains("' is not recognized as an internal or external command,") {
-                        scoop_count = 0;
-                    } else {
-                        scoop_count = stdout.lines().count() - 5;
+            match scoop_exists {
+                Ok(path) => {
+                    let mut scoop_dir = path.parent().unwrap_or(Path::new("")).to_path_buf();
+                    loop {
+                        if scoop_dir
+                            .as_os_str()
+                            .to_str()
+                            .unwrap_or("scoop")
+                            .ends_with("scoop")
+                        {
+                            break;
+                        }
+
+                        scoop_dir = scoop_dir.parent().unwrap_or(Path::new("")).to_path_buf();
+                    }
+
+                    scoop_dir = scoop_dir.join("apps");
+                    let files = read_dir(scoop_dir.as_os_str().to_str().unwrap_or("scoop"));
+
+                    match files {
+                        Ok(apps) => {
+                            scoop_count = apps.count();
+                        }
+                        Err(_) => {}
                     }
                 }
-                Err(_) => {
-                    scoop_count = 0;
-                }
+                Err(_) => {}
             }
 
             if scoop_count > 0 {
@@ -133,33 +145,35 @@ fn main() {
             }
 
             let mut choco_count = 0;
-            let choco_cmd = Command::new("cmd")
-                .arg("/C")
-                .arg("choco list -l")
-                .stdout(Stdio::piped())
-                .output();
+            let choco_path_buf = PathBuf::new()
+                .join("$PROGRAMDATA")
+                .join("chocolatey")
+                .join("lib");
+            let choco_path = full(
+                choco_path_buf
+                    .as_os_str()
+                    .to_str()
+                    .unwrap_or("C:\\ProgramData\\chocolatey\\lib"),
+            );
 
-            match choco_cmd {
-                Ok(_) => {
-                    let unwrapped = choco_cmd.unwrap();
-                    let stderr = String::from_utf8_lossy(&unwrapped.stderr);
-                    let stdout = String::from_utf8_lossy(&unwrapped.stdout);
-                    if stderr.contains("' is not recognized as an internal or external command,") {
-                        choco_count = 0;
-                    } else {
-                        choco_count = stdout.split(".\n").collect::<Vec<&str>>()[0]
-                            .lines()
-                            .count()
-                            - 2;
+            match choco_path {
+                Ok(path) => {
+                    let files = read_dir(path.to_string());
+
+                    match files {
+                        Ok(apps) => {
+                            choco_count = apps.count();
+                        }
+                        Err(_) => {}
                     }
                 }
-                Err(_) => {
-                    choco_count = 0;
-                }
+                Err(_) => {}
             }
 
             if choco_count > 0 {
-                packages += ", ";
+                if scoop_count > 0 {
+                    packages += ", ";
+                }
                 packages += (choco_count.to_string() + " (choco)").as_str();
             }
 
