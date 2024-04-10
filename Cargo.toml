@@ -9,15 +9,10 @@ readme = "README.md"
 homepage = "https://github.com/pybash1/winnf"
 repository = "https://github.com/pybash1/winnf"
 license = "MIT"
-license-file = "LICENSE"
 keywords = ["windows", "fetch", "terminal", "cli"]
 categories = ["command-line-utilities"]
 
 
 [dependencies]
-colored = "2.1.0"
-shellexpand = "3.1.0"
-sysinfo = "0.30.7"
-uptime_lib = "0.3.0"
-which = "6.0.1"
-whoami = "1.5.1"
+winapi = { version = "0.3.9", features = ["sysinfoapi", "winbase"] }
+winver = "1.0.0"
